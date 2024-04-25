@@ -40,14 +40,44 @@ try:
     data1, client_address1 = client_socket.recvfrom(1024)
     recdata = data1.decode()
     print(recdata)
+    temp = []
+    humi = []
     while (1):
         message = input("Enter message: ")
         try:
             client_socket.sendto(message.encode(), (ip, port))
             data1, client_address1 = client_socket.recvfrom(1024)
-            recdata = data1.decode()
-            os.system('cls')
-            print(f"Temp data: {recdata}")
+            recdata = pickle.loads(data1)
+            if recdata[0] == "temp":
+                print(f"Temp data: {recdata[1]}")
+                temp.append(recdata[1])
+                if 25 <= recdata[1] <= 39:
+                    print("Normal")
+                elif recdata[1] <= 25:
+                    print("Cool")
+                elif recdata[1] >= 40:
+                    print("Hot")
+                print(f"Average temp: {sum(temp)/len(temp)}")
+            elif recdata[0] == "humi":
+                print(f"Humidity data: {recdata[1]}")
+                humi.append(recdata[1])
+                if recdata[1] <= 50:
+                    print("PUMP : ON")
+                elif recdata[1] >= 50:
+                    print("PUMP : OFF")
+                print(f"Average humidity: {sum(humi)/len(humi)}")
+            elif recdata[0] == "all":
+                os.system('cls')
+                print(f"All data: {recdata[1]} Temp: {recdata[2]} Humi : {recdata[3]} PUMP STATUS : {recdata[4]}")
+            elif recdata[0] == "exit":
+                message = input(f"{recdata[1]}")
+                client_socket.sendto(message.encode(), (ip, port))
+                if message == "y":
+                    print(".......Bye Server......")
+                    client_socket.close()
+                    sys.exit()
+            else:
+                print(f"Data {recdata[1]}")
         except socket.error as emsg:
             print("Error sending message. Error Code : " + str(emsg[0]) + " Message " + emsg[1])
             sys.exit()
